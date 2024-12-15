@@ -24,14 +24,21 @@ class Fragment_1 : Fragment() {
 
         var namber = 0
 
+            private lateinit var description: EditText
+
+
+
+
+            lateinit var db: DbHelper
+
     override fun onCreateView( inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         return inflater.inflate(R.layout.fragment_1, container, false) }
 
     val list: MutableList<Description> = mutableListOf()
+         private lateinit var onFragment: OnFragment
 
-
-
+    val adapter = MyAdapter(list)
 
 
 
@@ -42,21 +49,22 @@ class Fragment_1 : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
 
+             onFragment = requireActivity() as OnFragment
 
         val formatDate = SimpleDateFormat("dd MMMM yy \n HH : mm", Locale.getDefault())
-         val description = view.findViewById<EditText>(R.id.descriptionText)
+          description = view.findViewById<EditText>(R.id.descriptionText)
          val button = view.findViewById<Button>(R.id.button)
          val listTv = view.findViewById<RecyclerView>(R.id.listTv)
              listTv.layoutManager = LinearLayoutManager(this.context)
-           val db = DbHelper(this@Fragment_1.context,null)
 
+         db = DbHelper(this@Fragment_1.context,null)
 
 
                       //  db.removeAll()
-
+            list.clear()
       list.addAll(db.readDescription()); namber = list.maxOfOrNull { it.number }?: 0
 
-        val adapter = MyAdapter(list)
+
          listTv.adapter = adapter
 
             adapter.setOnItemClick(object: MyAdapter.OnItemClick{
@@ -65,7 +73,7 @@ class Fragment_1 : Fragment() {
 
                    val bulder = AlertDialog.Builder(this@Fragment_1.context)
                         bulder.setTitle("Редактирование")
-                            .setPositiveButton("Редактировать"){_,_ -> Toast.makeText(this@Fragment_1.context,"В этой версии не доступно",Toast.LENGTH_LONG).show()}
+                            .setPositiveButton("Редактировать"){_,_ ->  onFragment.onData(description.description,position) }
                             .setNegativeButton("Удалить") {_,_ ->  list.removeAt(position); adapter.notifyDataSetChanged(); db.deleteDescription(description)}
                             .setNeutralButton("Отмена") {_,_ -> }.create().show() } } )
 
@@ -94,7 +102,24 @@ class Fragment_1 : Fragment() {
 
     }
 
+    override fun onResume() {
+        super.onResume()
 
+        val descr = arguments?.getString("key2")
+        val pos = arguments?.getInt("keyid2",-1)
+
+        if ((descr != null) and (pos != -1))  { list[pos!!].description = descr.toString(); adapter.notifyDataSetChanged()
+           db.updateDescription(list[pos])
+
+
+        }
+
+
+
+
+
+
+    }
 
 
 }
